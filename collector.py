@@ -28,5 +28,7 @@ if __name__ == '__main__':
     source = YahooRealTime(collection)
 
     while True:
+        start_time = time.time()
         source.download_data(config['tickers'])
-        time.sleep(config['interval'])
+        end_time = time.time()
+        time.sleep(config['interval'] - (end_time - start_time))
