@@ -1,0 +1,7 @@
+{
+  "tickers": [
+    "AXS.ST",
+    "^OMX"
+  ],
+  "interval": 600
+}
