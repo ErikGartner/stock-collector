@@ -24,7 +24,8 @@ class YahooRealTime(Source):
 
         r = requests.get(YQL_URL, params=params)
         if r.status_code != 200:
-            print('Error while fetching %s' % r.url, file=sys.stderr)
+            print('Error while fetching %s\n%s' % (r.url, r.content),
+                  file=sys.stderr)
             return []
 
         query = r.json()['query']
