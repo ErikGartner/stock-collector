@@ -1,4 +1,4 @@
-from threading import Timer
+import time
 import json
 import os
 
@@ -27,4 +27,6 @@ if __name__ == '__main__':
     collection = client.get_default_database().stock_collector
     source = YahooRealTime(collection)
 
-    Timer(config['interval'], source.download_data(config['tickers']))
+    while True:
+        source.download_data(config['tickers'])
+        time.sleep(config['interval'])
