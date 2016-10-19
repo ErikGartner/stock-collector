@@ -1,5 +1,6 @@
 import sys
 import requests
+import time
 
 from .source import Source
 
@@ -7,6 +8,9 @@ from .source import Source
 YQL_URL = 'https://query.yahooapis.com/v1/public/yql'
 YQL_QUERY = 'select * from yahoo.finance.quotes where symbol in ("%s")'
 
+# API stability parameters
+RETRIES = 10
+RETRY_WAIT = 20 / 1000
 
 class YahooRealTime(Source):
 
@@ -22,8 +26,13 @@ class YahooRealTime(Source):
             'callback': ''
         }
 
-        r = requests.get(YQL_URL, params=params)
-        if r.status_code != 200:
+        for i in range(RETRIES):
+            r = requests.get(YQL_URL, params=params)
+            if r.status_code == 200:
+                break
+            else:
+                time.sleep(RETRY_WAIT)
+        else:
             print('Error while fetching %s\n%s' % (r.url, r.content),
                   file=sys.stderr)
             return []
