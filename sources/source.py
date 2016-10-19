@@ -11,7 +11,7 @@ class Source:
         data = []
         for i in range(0, len(symbols), 20):
             data.extend(self._download_data(symbols[i:i+20], params))
-            time.sleep(50)  # Be nice to the api
+            time.sleep(50 / 1000)  # Be nice to the api
         self.mdb_collection.insert_many(data)
         print('%s - done!' % self.name)
 
