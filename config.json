@@ -1,6 +1,7 @@
 {
   "tickers": [
     "^OMX",
+    "^GSPC",
 
     "EURSEK=X",
     "SEK=X",
@@ -8,6 +9,14 @@
     "EURGBP=X",
     "RUB=X",
 
+    "GC=F",
+    "SI=F",
+    "BZ=F",
+    "NG=F",
+    "C=F",
+
+    "AAPL",
+    "GOOGL",
     "AXS.ST",
     "ACM.ST",
     "AAK.ST",
