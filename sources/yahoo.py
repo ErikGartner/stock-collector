@@ -20,7 +20,8 @@ DATA_KEYS = ['Currency', 'LastTradeDate', 'LastTradeWithTime', 'Name',
              'EPSEstimateNextQuarter', 'DaysLow', 'DaysHigh', 'YearLow',
              'YearHigh', 'MarketCapitalization', 'EBITDA',
              'LastTradePriceOnly', 'Name', 'Open', 'DividendYield',
-             'YearRange', 'PriceSales', 'PriceBook', 'PercentChange']
+             'YearRange', 'PriceSales', 'PriceBook', 'PercentChange',
+             'PercentChangeFromYearLow', 'PercentChangeFromYearHigh']
 
 
 class YahooRealTime(Source):
