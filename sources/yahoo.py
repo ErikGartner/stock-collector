@@ -34,6 +34,8 @@ class YahooRealTime(Source):
 
     def _download_data(self, symbols, params):
         symbols = [s for s in symbols if self._is_trading(s)]
+        if len(symbols) == 0:
+            return []
 
         # query parameters
         params = {
