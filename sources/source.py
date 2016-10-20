@@ -1,5 +1,6 @@
 import time
 
+
 class Source:
 
     def __init__(self, name, mdb_collection):
@@ -8,10 +9,14 @@ class Source:
 
     def download_data(self, symbols, params=None):
         print('%s - downloading %s' % (self.name, symbols))
+
         data = []
         for i in range(0, len(symbols), 20):
             data.extend(self._download_data(symbols[i:i+20], params))
-            time.sleep(50 / 1000)  # Be nice to the api
+
+            # Be nice to the api
+            time.sleep(50 / 1000)
+
         self.mdb_collection.insert_many(data)
         print('%s - done!' % self.name)
 
