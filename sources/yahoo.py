@@ -1,6 +1,9 @@
 import sys
 import requests
 import time
+import pytz
+import datetime
+from tzlocal import get_localzone
 
 from .source import Source
 
@@ -30,6 +33,7 @@ class YahooRealTime(Source):
         super().__init__('YahooRealTime', mongo)
 
     def _download_data(self, symbols, params):
+        symbols = [s for s in symbols if self._is_trading(s)]
 
         # query parameters
         params = {
@@ -67,3 +71,30 @@ class YahooRealTime(Source):
             }
             data.append(d)
         return data
+
+    def _is_trading(self, symbol):
+        # Currencies and commodities
+        if '=' in symbol:
+            return True
+
+        d = datetime.datetime.now()
+        tz = get_localzone()
+        utc_time = tz.normalize(tz.localize(d)).astimezone(pytz.utc)
+
+        # Stocks
+
+        # United States per default
+        symbol_timezone = pytz.timezone('US/Eastern')
+        symbol_open = datetime.time(9, 30)
+        symbol_close = datetime.time(16, 00)
+
+        # Swedish
+        if '.ST' in symbol or '^OMX' in symbol:
+            symbol_timezone = pytz.timezone('Europe/Stockholm')
+            symbol_open = datetime.time(9, 00)
+            symbol_close = datetime.time(17, 30)
+
+        symbol_time = utc_time.astimezone(symbol_timezone)
+        return (symbol_time.time() > symbol_open and
+                symbol_time.time() < symbol_close and
+                symbol_time.isoweekday() in range(1, 5))

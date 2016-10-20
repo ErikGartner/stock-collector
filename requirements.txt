@@ -1,2 +1,4 @@
 pymongo==3.3.0
 requests==2.11.1
+pytz==2016.7
+tzlocal==1.3
