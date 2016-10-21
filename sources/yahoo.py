@@ -26,14 +26,27 @@ DATA_KEYS = ['Currency', 'LastTradeDate', 'LastTradeWithTime', 'Name',
              'YearRange', 'PriceSales', 'PriceBook', 'PercentChange',
              'PercentChangeFromYearLow', 'PercentChangeFromYearHigh']
 
+# StockExchange callsign : (market timezone, market open, market close)
+MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
+                        datetime.time(9, 00), datetime.time(17, 30)),
+                'SNP': (pytz.timezone('US/Eastern'),
+                        datetime.time(9, 30), datetime.time(16, 00)),
+                'NMS': (pytz.timezone('US/Eastern'),
+                        datetime.time(9, 30), datetime.time(16, 00))}
+
+# Currency and commodity markets are always trading
+ALWAYS_OPEN_MARKETS = ['CCY', 'CMX', 'NYM', 'CBT']
+
 
 class YahooRealTime(Source):
 
     def __init__(self, mongo):
         super().__init__('YahooRealTime', mongo)
+        self.symbol_market = {}
 
     def _download_data(self, symbols, params):
-        symbols = [s for s in symbols if self._is_trading(s)]
+        symbols = [s for s in symbols if
+                   self._is_trading(self.symbol_market.get(s))]
         if len(symbols) == 0:
             return []
 
@@ -71,32 +84,33 @@ class YahooRealTime(Source):
                 'data': {key: r[key] for key in DATA_KEYS if key in r},
                 'ticker': r['symbol']
             }
-            data.append(d)
+
+            # add missing symbol market data
+            ticker = d['ticker']
+            ticker_market = d['data']['StockExchange']
+            if ticker not in self.symbol_market:
+                self.symbol_market[ticker] = ticker_market
+                if self._is_trading(self.symbol_market.get(ticker)):
+                    data.append(d)
+            else:
+                data.append(d)
         return data
 
-    def _is_trading(self, symbol):
-        # Currencies and commodities
-        if '=' in symbol:
+    def _is_trading(self, market):
+        if market in ALWAYS_OPEN_MARKETS:
+            return True
+
+        if market not in MARKET_TIMES:
+            if market is not None:
+                print('No user added time data for market \'%s\'.' % market)
             return True
 
         d = datetime.datetime.now()
         tz = get_localzone()
         utc_time = tz.normalize(tz.localize(d)).astimezone(pytz.utc)
 
-        # Stocks
-
-        # United States per default
-        symbol_timezone = pytz.timezone('US/Eastern')
-        symbol_open = datetime.time(9, 30)
-        symbol_close = datetime.time(16, 00)
-
-        # Swedish
-        if '.ST' in symbol or '^OMX' in symbol:
-            symbol_timezone = pytz.timezone('Europe/Stockholm')
-            symbol_open = datetime.time(9, 00)
-            symbol_close = datetime.time(17, 30)
-
-        symbol_time = utc_time.astimezone(symbol_timezone)
-        return (symbol_time.time() > symbol_open and
-                symbol_time.time() < symbol_close and
-                symbol_time.isoweekday() in range(1, 5))
+        market_info = MARKET_TIMES[market]
+        market_time = utc_time.astimezone(market_info[0])
+        return (market_time.time() >= market_info[1] and
+                market_time.time() <= market_info[2] and
+                market_time.isoweekday() in range(1, 6))
