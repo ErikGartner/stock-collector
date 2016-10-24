@@ -73,14 +73,14 @@ class YahooRealTime(Source):
         # parse data
         query = r.json()['query']
         results = query['results']['quote']
-        time = query['created']
+        created = query['created']
 
         # build data
         data = []
         for r in results:
             d = {
                 'source': self.name,
-                'time': time,
+                'time': created,
                 'data': {key: r[key] for key in DATA_KEYS if key in r},
                 'ticker': r['symbol']
             }
