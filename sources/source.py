@@ -17,7 +17,9 @@ class Source:
             # Be nice to the api
             time.sleep(50 / 1000)
 
-        self.mdb_collection.insert_many(data)
+        # Only add data to collection if we have collected data
+        if data:
+            self.mdb_collection.insert_many(data)
         print('%s - done!' % self.name)
 
     def _download_data(self, symbols, params):

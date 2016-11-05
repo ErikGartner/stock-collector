@@ -1,5 +1,6 @@
 import sys
 import requests
+import csv
 import time
 import pytz
 import datetime
@@ -8,23 +9,25 @@ from tzlocal import get_localzone
 from .source import Source
 
 # Yahoo urls
-YQL_URL = 'https://query.yahooapis.com/v1/public/yql'
-YQL_QUERY = 'select * from yahoo.finance.quotes where symbol in ("%s")'
+YQL_URL = 'http://finance.yahoo.com/d/quotes.csv'
 
 # API stability parameters
 RETRIES = 10
 RETRY_WAIT = 20 / 1000
 
-# query keys
-DATA_KEYS = ['Currency', 'LastTradeDate', 'LastTradeWithTime', 'Name',
-             'PreviousClose', 'Symbol', 'StockExchange', 'Ask',
-             'AverageDailyVolume', 'Bid', 'BookValue', 'Change',
-             'DividendShare', 'EPSEstimateCurrentYear', 'EPSEstimateNextYear',
-             'EPSEstimateNextQuarter', 'DaysLow', 'DaysHigh', 'YearLow',
-             'YearHigh', 'MarketCapitalization', 'EBITDA',
-             'LastTradePriceOnly', 'Name', 'Open', 'DividendYield',
-             'YearRange', 'PriceSales', 'PriceBook', 'PercentChange',
-             'PercentChangeFromYearLow', 'PercentChangeFromYearHigh']
+# Data query keys (selection)
+# a Ask, a2 Average Daily Volume, a5 Ask Size
+# b Bid, b2 Ask (Real-time), b3 Bid (Real-time)
+# b6 Bid Size, c Change & Percent Change
+# c1 Change, c6 Change (Real-time), d1 Last Trade Date, d2 Trade Date
+# g Day’s Low, h Day’s High, j 52-week Low, k 52-week High
+# i5 Order Book (Real-time),j yearLow, k yearHigh, j3 Market Cap (Real-time)
+# k1 Last Trade (Real-time) With Time
+# k2 Change Percent (Real-time), k3 Last Trade Size
+# l Last Trade (With Time), l1 Last Trade (Price Only)
+# o Open, p Previous Close, p1 Price Paid, n Name
+# p2 Change in Percent, r2 P/E Ratio (Real-time), s Symbol, x Stock exchange
+DATA_KEYS = 'snll1d1abghjkk1va2x'
 
 # StockExchange callsign : (market timezone, market open, market close)
 MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
@@ -32,10 +35,9 @@ MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
                 'SNP': (pytz.timezone('US/Eastern'),
                         datetime.time(9, 30), datetime.time(16, 00)),
                 'NMS': (pytz.timezone('US/Eastern'),
-                        datetime.time(9, 30), datetime.time(16, 00))}
-
-# Currency and commodity markets are always trading
-ALWAYS_OPEN_MARKETS = ['CCY', 'CMX', 'NYM', 'CBT']
+                        datetime.time(9, 30), datetime.time(16, 00)),
+                'CCY': (pytz.timezone('US/Eastern'),
+                        datetime.time(17, 00), datetime.time(16, 00))}
 
 
 class YahooRealTime(Source):
@@ -52,15 +54,14 @@ class YahooRealTime(Source):
 
         # query parameters
         params = {
-            'q': YQL_QUERY % ','.join(symbols),
-            'format': 'json',
-            'env': 'store://datatables.org/alltableswithkeys',
-            'callback': ''
+            's': '+'.join(symbols),
+            'f': DATA_KEYS
         }
 
         # retry downloads
         for i in range(RETRIES):
             r = requests.get(YQL_URL, params=params)
+            date = datetime.datetime.now()
             if r.status_code == 200:
                 break
             else:
@@ -71,18 +72,35 @@ class YahooRealTime(Source):
             return []
 
         # parse data
-        query = r.json()['query']
-        results = query['results']['quote']
-        created = query['created']
+        decoded_content = r.content.decode('utf-8')
+        cr = csv.reader(decoded_content.splitlines(), delimiter=',')
+        data_list = list(cr)
 
         # build data
+        tz = get_localzone()
         data = []
-        for r in results:
+        for stock in data_list:
             d = {
-                'source': self.name,
-                'time': created,
-                'data': {key: r[key] for key in DATA_KEYS if key in r},
-                'ticker': r['symbol']
+                'source': self.name + ' csv',
+                'time': (tz.normalize(tz.localize(date)).astimezone(pytz.utc)
+                         .strftime('%Y-%m-%dT%H:%M:%SZ')),
+                'ticker': stock[0],
+                # Make sure you match the order with your parameter signature
+                'data': {'Name': stock[1],
+                         'LastTradeWithTime': stock[2],
+                         'LastTradePriceOnly': stock[3],
+                         'LastTradeDate': stock[4],
+                         'Ask': stock[5],
+                         'Bid': stock[6],
+                         'DaysLow': stock[7],
+                         'DaysHigh': stock[8],
+                         'YearLow': stock[9],
+                         'YearHigh': stock[10],
+                         'LastTradeWithTimeRealTime': stock[11],
+                         'Volume': stock[12],
+                         'AverageDailyVolume': stock[13],
+                         'StockExchange': stock[14]
+                         }
             }
 
             # add missing symbol market data
@@ -97,9 +115,6 @@ class YahooRealTime(Source):
         return data
 
     def _is_trading(self, market):
-        if market in ALWAYS_OPEN_MARKETS:
-            return True
-
         if market not in MARKET_TIMES:
             if market is not None:
                 print('No user added time data for market \'%s\'.' % market)
@@ -111,6 +126,18 @@ class YahooRealTime(Source):
 
         market_info = MARKET_TIMES[market]
         market_time = utc_time.astimezone(market_info[0])
+
+        # Currency markets are open (ET) Sunday 1700-Friday 1600
+        if market == 'CCY':
+            if ((market_time.isoweekday() == 8 and
+                 market_time.time() >= market_info[1]) or
+                (market_time.isoweekday() == 6 and
+                 market_time.time() <= market_info[2]) or
+                (market_time.isoweekday() < 6)):
+                return true
+            else:
+                return false
+
         return (market_time.time() >= market_info[1] and
                 market_time.time() <= market_info[2] and
                 market_time.isoweekday() in range(1, 6))
