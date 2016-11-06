@@ -129,11 +129,11 @@ class YahooRealTime(Source):
 
         # Currency markets are open (ET) Sunday 1700-Friday 1600
         if market == 'CCY':
-            if ((market_time.isoweekday() == 8 and
+            if ((market_time.isoweekday() == 7 and
                  market_time.time() >= market_info[1]) or
-                (market_time.isoweekday() == 6 and
+                (market_time.isoweekday() == 5 and
                  market_time.time() <= market_info[2]) or
-                (market_time.isoweekday() < 6)):
+                (market_time.isoweekday() < 5)):
                 return True
             else:
                 return False
