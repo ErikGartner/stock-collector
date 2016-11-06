@@ -16,18 +16,25 @@ RETRIES = 10
 RETRY_WAIT = 20 / 1000
 
 # Data query keys (selection)
-# a Ask, a2 Average Daily Volume, a5 Ask Size
-# b Bid, b2 Ask (Real-time), b3 Bid (Real-time)
-# b6 Bid Size, c Change & Percent Change
-# c1 Change, c6 Change (Real-time), d1 Last Trade Date, d2 Trade Date
-# g Day’s Low, h Day’s High, j 52-week Low, k 52-week High
-# i5 Order Book (Real-time),j yearLow, k yearHigh, j3 Market Cap (Real-time)
-# k1 Last Trade (Real-time) With Time
-# k2 Change Percent (Real-time), k3 Last Trade Size
-# l Last Trade (With Time), l1 Last Trade (Price Only)
-# o Open, p Previous Close, p1 Price Paid, n Name
-# p2 Change in Percent, r2 P/E Ratio (Real-time), s Symbol, x Stock exchange
-DATA_KEYS = 'snll1d1abghjkk1va2x'
+DATA_KEY_TABLE = {'Ask': 'a', 'AverageDailyVolume': 'a2', 'AskSize': 'a5',
+                  'Bid': 'b', 'AskRealTime': 'b2', 'BidRealTime': 'b3',
+                  'BidSize': 'b6', 'ChangeAndPercentChange': 'c',
+                  'Change': 'c1', 'ChangeRealTime': 'c6',
+                  'LastTradeDate': 'd1', 'TradeDate': 'd2', 'DaysLow': 'g',
+                  'DaysHigh': 'h', '52WeekLow': 'j', '52WeekHigh': 'k',
+                  'OrderBookRealTime': 'i5', 'MarketCapRealTime': 'j3',
+                  'LastTradeWithTimeRealTime': 'k1',
+                  'ChangePercentRealTime': 'k2', 'LastTradeSize': 'k3',
+                  'LastTradeWithTime': 'l', 'LastTradePriceOnly': 'l1',
+                  'Open': 'o', 'PreviousClose': 'p', 'PricePaid': 'p1',
+                  'Name': 'n', 'ChangeInPercent': 'p2', 'Volume': 'v',
+                  'PERatioRealTime': 'r2', 'Symbol': 's', 'StockExchange': 'x'}
+
+# Set data keys to collect, Symbol and StockExchange required, Symbol at [0]
+KEYS_TO_COLLECT = ['Symbol', 'StockExchange', 'Name', 'LastTradeWithTime',
+                   'LastTradeDate', 'Ask', 'Bid', 'DaysLow', 'DaysHigh',
+                   '52WeekLow', '52WeekHigh', 'LastTradeWithTimeRealTime',
+                   'Volume', 'AverageDailyVolume', 'LastTradePriceOnly']
 
 # StockExchange callsign : (market timezone, market open, market close)
 MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
@@ -53,9 +60,10 @@ class YahooRealTime(Source):
             return []
 
         # query parameters
+        data_keys = [DATA_KEY_TABLE[k] for k in KEYS_TO_COLLECT]
         params = {
             's': '+'.join(symbols),
-            'f': DATA_KEYS
+            'f': ''.join(data_keys)
         }
 
         # retry downloads
@@ -85,22 +93,7 @@ class YahooRealTime(Source):
                 'time': (tz.normalize(tz.localize(date)).astimezone(pytz.utc)
                          .strftime('%Y-%m-%dT%H:%M:%SZ')),
                 'ticker': stock[0],
-                # Make sure you match the order with your parameter signature
-                'data': {'Name': stock[1],
-                         'LastTradeWithTime': stock[2],
-                         'LastTradePriceOnly': stock[3],
-                         'LastTradeDate': stock[4],
-                         'Ask': stock[5],
-                         'Bid': stock[6],
-                         'DaysLow': stock[7],
-                         'DaysHigh': stock[8],
-                         'YearLow': stock[9],
-                         'YearHigh': stock[10],
-                         'LastTradeWithTimeRealTime': stock[11],
-                         'Volume': stock[12],
-                         'AverageDailyVolume': stock[13],
-                         'StockExchange': stock[14]
-                         }
+                'data': dict(zip(KEYS_TO_COLLECT[1:], stock[1:]))
             }
 
             # add missing symbol market data
