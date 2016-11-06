@@ -134,9 +134,9 @@ class YahooRealTime(Source):
                 (market_time.isoweekday() == 6 and
                  market_time.time() <= market_info[2]) or
                 (market_time.isoweekday() < 6)):
-                return true
+                return True
             else:
-                return false
+                return False
 
         return (market_time.time() >= market_info[1] and
                 market_time.time() <= market_info[2] and
