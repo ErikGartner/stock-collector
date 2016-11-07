@@ -44,7 +44,11 @@ MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
                 'NMS': (pytz.timezone('US/Eastern'),
                         datetime.time(9, 30), datetime.time(16, 00)),
                 'CCY': (pytz.timezone('US/Eastern'),
-                        datetime.time(17, 00), datetime.time(16, 00))}
+                        datetime.time(17, 00), datetime.time(16, 00)),
+                'NYM': (pytz.timezone('US/Eastern'),
+                        datetime.time(18, 00), datetime.time(17, 15)),
+                'CMX': (pytz.timezone('US/Eastern'),
+                        datetime.time(18, 00), datetime.time(17, 15))}
 
 
 class YahooRealTime(Source):
@@ -120,8 +124,8 @@ class YahooRealTime(Source):
         market_info = MARKET_TIMES[market]
         market_time = utc_time.astimezone(market_info[0])
 
-        # Currency markets are open (ET) Sunday 1700-Friday 1600
-        if market == 'CCY':
+        # Currency/some commodity markets are open Sunday - Friday
+        if market in {'CCY', 'CMX', 'NYM'}:
             if ((market_time.isoweekday() == 7 and
                  market_time.time() >= market_info[1]) or
                 (market_time.isoweekday() == 5 and
