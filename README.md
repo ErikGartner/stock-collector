@@ -22,7 +22,7 @@ Built for Python3.5 using requests and pymongo.
 ```
 
 ### Mongo Format
-```json
+```python
 {  
    "_id":ObjectId("586be2b45872efc3d1f311f4"),
    "source":"YahooRealTime",
