@@ -73,7 +73,6 @@ class YahooRealTime(Source):
         # retry downloads
         for i in range(RETRIES):
             r = requests.get(YQL_URL, params=params)
-            date = datetime.datetime.now()
             if r.status_code == 200:
                 break
             else:
@@ -89,12 +88,11 @@ class YahooRealTime(Source):
         data_list = list(cr)
 
         # build data
-        tz = get_localzone()
         data = []
         for stock in data_list:
             d = {
                 'source': self.name,
-                'time': date,
+                'time': datetime.datetime.now(pytz.utc),
                 'ticker': stock[0],
                 'data': dict(zip(KEYS_TO_COLLECT[1:], stock[1:])),
             }
