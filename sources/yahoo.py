@@ -93,11 +93,10 @@ class YahooRealTime(Source):
         data = []
         for stock in data_list:
             d = {
-                'source': self.name + ' csv',
-                'time': (tz.normalize(tz.localize(date)).astimezone(pytz.utc)
-                         .strftime('%Y-%m-%dT%H:%M:%SZ')),
+                'source': self.name,
+                'time': date,
                 'ticker': stock[0],
-                'data': dict(zip(KEYS_TO_COLLECT[1:], stock[1:]))
+                'data': dict(zip(KEYS_TO_COLLECT[1:], stock[1:])),
             }
 
             # add missing symbol market data
