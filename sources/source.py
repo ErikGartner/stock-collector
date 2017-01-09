@@ -58,7 +58,7 @@ class Source:
                     })
                 else:
                     ticker_metadata['end'] = fetch_time
-                    self.metadata_db.update(ticker_metadata['_id'],
+                    self.metadata_db.update({'_id': ticker_metadata['_id']},
                                             ticker_metadata)
 
                 # values is True if succesfully updated but no new data
