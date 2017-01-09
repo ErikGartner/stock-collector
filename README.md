@@ -9,7 +9,7 @@ The program collects realtime data with predefined intervals. It also stores met
 Built for Python3.5 using requests and pymongo.
 
 1. Install requirements in `requirements.txt`.
-2. Configure using `config.json` and set `MONGO_URL` in environment.
+2. Configure using `config.json` and set `mongo_uri` in environment.
 3. Run `python collector.py`
 
 ### config.json
