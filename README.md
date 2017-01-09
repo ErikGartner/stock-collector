@@ -3,6 +3,8 @@
 
 This small python modules enables the user to download and store near realtime Yahoo Finance stock, to be viewed and used later for private purposes.
 
+The program collects realtime data with predefined intervals. It also stores metadata to make it easier to detect gaps in data due to failures. The metadata displays the data as continuous and complete as long as either the data was successfully downloaded or there was no available data (due to markets being closed).
+
 ## Usage
 Built for Python3.5 using requests and pymongo.
 
@@ -22,6 +24,7 @@ Built for Python3.5 using requests and pymongo.
 ```
 
 ### Mongo Format
+Data:
 ```python
 {  
    "_id":ObjectId("586be2b45872efc3d1f311f4"),
@@ -44,6 +47,17 @@ Built for Python3.5 using requests and pymongo.
       "AverageDailyVolume":"1871150",
       "LastTradePriceOnly":"808.31"
    }
+}
+```
+Metadata:
+```json
+{  
+   "_id":ObjectId("5873c89cecb91b00083f13ea"),
+   "interval":600,
+   "start":   ISODate("2017-01-09T17:30:00.103   Z"),
+   "source":"YahooRealTime",
+   "end":   ISODate("2017-01-09T17:40:00.103   Z"),
+   "ticker":"BONAV-B.ST"
 }
 ```
 
