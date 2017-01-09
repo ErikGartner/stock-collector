@@ -53,8 +53,8 @@ MARKET_TIMES = {'STO': (pytz.timezone('Europe/Stockholm'),
 
 class YahooRealTime(Source):
 
-    def __init__(self, mongo):
-        super().__init__('YahooRealTime', mongo)
+    def __init__(self, data_db, metadata_db, config):
+        super().__init__('YahooRealTime', data_db, metadata_db, config)
         self.symbol_market = {}
 
     def _download_data(self, symbols, params):
@@ -88,8 +88,12 @@ class YahooRealTime(Source):
         data_list = list(cr)
 
         # build data
-        data = []
+        data = {}
         for stock in data_list:
+            if stock[KEYS_TO_COLLECT.index('LastTradeDate')] == 'N/A':
+                data[stock[0]] = False
+                continue
+
             d = {
                 'source': self.name,
                 'time': datetime.datetime.now(pytz.utc),
@@ -103,9 +107,12 @@ class YahooRealTime(Source):
             if ticker not in self.symbol_market:
                 self.symbol_market[ticker] = ticker_market
                 if self._is_trading(self.symbol_market.get(ticker)):
-                    data.append(d)
+                    data[stock[0]] = d
+                else:
+                    data[stock[0]] = True
+
             else:
-                data.append(d)
+                data[stock[0]] = d
         return data
 
     def _is_trading(self, market):
