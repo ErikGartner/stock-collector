@@ -14,8 +14,8 @@ def read_config():
         config = json.load(data_file)
 
     if 'mongo_uri' not in config:
-        config['mongo_uri'] = os.environ.get('mongo_uri',
-                                             'mongodb://localhost:3001/meteor')
+        config['mongo_uri'] = os.getenv('MONGO_URL',
+                                        'mongodb://localhost:3000/stock-data')
 
     return config
 
