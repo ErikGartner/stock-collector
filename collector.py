@@ -9,13 +9,27 @@ from sources.yahoo import YahooRealTime
 
 
 def read_config():
+    """
+    Read the config for this module.
+    Priority is env, config.json then defaults.
+    """
 
+    # 3. Defaults. All items should have keys here.
+    config = {
+        'mongo_uri': 'mongodb://localhost/stock-data',
+        'interval': 600,
+        'tickers': []
+    }
+
+    # 2. Read from config.json
     with open('config.json') as data_file:
-        config = json.load(data_file)
+        config.update(json.load(data_file))
 
-    if 'mongo_uri' not in config:
-        config['mongo_uri'] = os.getenv('MONGO_URL',
-                                        'mongodb://localhost:3000/stock-data')
+    # 1. Environment
+    for key in config:
+        val = os.getenv(key, None)
+        if val is not None:
+            config[key] = val
 
     return config
 
