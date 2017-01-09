@@ -16,7 +16,7 @@ class Source:
         self.timeout = GAP_CONSTANT + timedelta(seconds=config['interval'])
 
     def download_data(self, symbols, params=None):
-        print('%s - downloading %s' % (self.name, symbols))
+        print('%s - downloading..' % self.name)
         fetch_time = datetime.now().replace(tzinfo=pytz.utc)
 
         data = {}
@@ -37,7 +37,7 @@ class Source:
         insert_list = []
         for ticker, values in data.items():
             if values is False:
-                print('Failed to download %s' % ticker)
+                print('  -> %s - Failed ' % ticker)
             else:
                 ticker_metadata = self.metadata_db.find_one({
                     'ticker': ticker,
@@ -63,5 +63,9 @@ class Source:
 
                 # values is True if succesfully updated but no new data
                 if values is not True:
+                    print('  -> %s - Ok! ' % ticker)
                     insert_list.append(values)
+                else:
+                    print('  -> %s - Closed/No New Data ' % ticker)
+
         self.data_db.insert_many(insert_list)
