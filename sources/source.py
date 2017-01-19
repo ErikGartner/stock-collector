@@ -43,7 +43,7 @@ class Source:
                     'ticker': ticker,
                     'source': self.name,
                     'interval': self.config['interval']},
-                    sort=[('time', -1)])
+                    sort=[('end', -1)])
 
                 if (ticker_metadata is None or
                     (fetch_time - ticker_metadata['end'].
