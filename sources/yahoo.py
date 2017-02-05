@@ -58,10 +58,15 @@ class YahooRealTime(Source):
         self.symbol_market = {}
 
     def _download_data(self, symbols, params):
+        # Data defaults to fetch succesful but market closed
+        data = {s: True for s in symbols}
+
+        # Filter to only fetch for open markets
         symbols = [s for s in symbols if
                    self._is_trading(self.symbol_market.get(s))]
         if len(symbols) == 0:
-            return []
+            # All markets closed
+            return data
 
         # query parameters
         data_keys = [DATA_KEY_TABLE[k] for k in KEYS_TO_COLLECT]
@@ -80,7 +85,9 @@ class YahooRealTime(Source):
         else:
             print('Error while fetching %s\n%s' % (r.url, r.content),
                   file=sys.stderr)
-            return []
+            # Set all stocks to False meaning an error occured
+            data.update({s: False for s in symbols})
+            return data
 
         # parse data
         decoded_content = r.content.decode('utf-8')
@@ -88,7 +95,6 @@ class YahooRealTime(Source):
         data_list = list(cr)
 
         # build data
-        data = {}
         for stock in data_list:
             if stock[KEYS_TO_COLLECT.index('LastTradeDate')] == 'N/A':
                 data[stock[0]] = False
