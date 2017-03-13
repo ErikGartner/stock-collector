@@ -90,7 +90,7 @@ class YahooRealTime(Source):
             return data
 
         # parse data
-        decoded_content = r.content.decode('utf-8')
+        decoded_content = r.content.decode('utf-8', errors='ignore')
         cr = csv.reader(decoded_content.splitlines(), delimiter=',')
         data_list = list(cr)
 
