@@ -10,6 +10,7 @@ import pytz
 
 from collector import read_config
 
+
 def read_config():
     """
     Read the config for this module.
@@ -55,7 +56,7 @@ def format_point(day_points):
     new_points = []
     for d in day_points:
         point = d['data']
-        point['time'] = pytz.timezone('Europe/Stockholm').localize(d['time'] + timedelta(hours=1))
+        point['time'] = d['time'].replace(tzinfo=pytz.UTC).astimezone(pytz.timezone('Europe/Stockholm'))
         new_points.append(point)
 
     # Adjust volume
@@ -71,9 +72,8 @@ def format_point(day_points):
 
 
 def verify_integrity(frame):
-    if len(frame) != 41:
+    if len(frame) != 52:
         print('Incorrect length', len(frame))
-        print(frame)
         return False
     return True
 
@@ -139,7 +139,7 @@ def export_stock(ticker, from_date=None, to_date=None):
                 'date': date
             }
             return_list.append((stock_info, frame))
-        i += j + 11
+        i += j
 
     return return_list
 
