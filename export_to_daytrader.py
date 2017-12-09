@@ -72,9 +72,19 @@ def format_point(day_points):
 
 
 def verify_integrity(frame):
+    """
+    Checks if a frame is valid.
+    """
+    # Drop dates with missing data
     if len(frame) != 52:
-        print('Incorrect length', len(frame))
+        print('Incorrect length:', len(frame))
         return False
+
+    # Drop red days
+    if frame['price'].min() == frame['price'].max():
+        print('Dropping day without price change, ', frame.index[0].date())
+        return False
+
     return True
 
 
@@ -98,24 +108,23 @@ def stock_with_frame_to_file(stock_info, trades_frame, base_path='data/',
 
     # Save trades data
     trades_frame.to_hdf(file_name + '.h5', 'trade_frame', format='table',
-                        mode='w')
+                        mode='w', complevel=9, complib='blosc:lz4',
+                        fletcher32=True)
 
     # Save information about stock
     with open(file_name + '.yml', 'w') as outfile:
         yaml.dump(stock_info, outfile)
 
 
-def export_stock(ticker, from_date=None, to_date=None):
+def export_stock(collection, ticker, from_date=None, to_date=None):
     if to_date is None:
         to_date = datetime.utcnow()
     if from_date is None:
         from_date = datetime(1970, 1, 1)
 
-    config = read_config()
-    client = MongoClient(config['mongo_uri'])
-    data_db = client.get_default_database().stock_collector
+    print('Export stock %s from mongo' % ticker)
 
-    data = list(data_db.find({
+    data = list(collection.find({
         'ticker': ticker,
         'time': {'$gte': from_date, '$lte': to_date}
         }).sort('time'))
@@ -130,6 +139,8 @@ def export_stock(ticker, from_date=None, to_date=None):
                 day.append(data[i+j])
             else:
                 break
+        else:
+            j += 1
         frame = format_point(day)
         if verify_integrity(frame):
             stock_info = {
@@ -140,14 +151,17 @@ def export_stock(ticker, from_date=None, to_date=None):
             }
             return_list.append((stock_info, frame))
         i += j
-
     return return_list
 
 
 if __name__ == '__main__':
     config = read_config()
+    client = MongoClient(config['mongo_uri'])
+    collection = client.get_default_database().stock_collector
 
     for ticker in config['tickers']:
-        for stock_info, frames in export_stock(ticker):
+        data = export_stock(collection, ticker)
+        print('Writing frames to files...')
+        for stock_info, frames in data:
             stock_with_frame_to_file(stock_info, frames,
                                      base_path='/Users/erik/Desktop/data')
