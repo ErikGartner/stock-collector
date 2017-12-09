@@ -65,6 +65,7 @@ def format_point(day_points):
     df = pd.DataFrame.from_dict(new_points, orient='columns', dtype=float)
     df = df[['time', 'LastTradePriceOnly', 'Volume']]
     df = df.rename(index=str, columns={'LastTradePriceOnly': 'price', 'Volume': 'nbr'})
+    df['time'] = df['time'].apply(lambda x: x.replace(second=0, microsecond=0))
     df = df.set_index('time')
     new_data = pd.DataFrame(df[-1:].values, index=[df.index[-1] + timedelta(minutes=10)], columns=df.columns)
     df = df.append(new_data)
