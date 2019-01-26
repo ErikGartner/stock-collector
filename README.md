@@ -1,5 +1,6 @@
 # Stock Collector
 **ABANDONED AFTER YAHOO SHUTDOWN THEIR API**
+
 *Downloads available real time data for a set of instruments and stores it in a Mongo database*
 
 This small python modules enables the user to download and store near realtime Yahoo Finance stock, to be viewed and used later for private purposes.
